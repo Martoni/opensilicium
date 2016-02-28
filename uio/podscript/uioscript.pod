@@ -1,0 +1,20 @@
+create uioled
+selectplatform standard.apf6_sp
+
+addinstance components.led.wb
+addinstance components.button.wb
+
+connectpin button00.int_button.button.0 apf6_sp.fpga.D2
+connectpin led00.int_led.led apf6_sp.fpga.D0
+connectpin button00.int_button.irq imx6_wb_wrapper00.irq.irq_irq.0
+
+autoconnectbus
+generateintercon imx6_wb_wrapper00.aval64
+generateintercon imx6_wb_wrapper00.candroutput
+generatetop
+
+synthesis.selecttoolchain quartus
+synthesis.generateproject
+synthesis.generatebitstream
+
+exit

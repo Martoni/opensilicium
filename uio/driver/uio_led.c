@@ -6,7 +6,7 @@
 #include <linux/uio_driver.h>
 
 #define DRV_NAME	"uio_led"
-#define DRV_VERSION	"0.1"
+#define DRV_VERSION	"0.2"
 
 #define BAR0 0
 
@@ -14,13 +14,20 @@
 
 static irqreturn_t button_int(int irq, struct uio_info *dev_info)
 {
+
+	readw(dev_info->mem[0].internal_addr + BUTTON_VALUE);
+
 	return IRQ_HANDLED;
 }
 
 static int led_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 {
 	struct uio_info *info;
-	int ret, msi_num;
+	void __iomem * const * iomap;
+	u16 value;
+	u32 value32;
+	int ret = -EAGAIN;
+	int msi_num, i;
 
 	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
 	if (!info)
@@ -34,9 +41,12 @@ static int led_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	if (ret)
 		return ret;
 
-	info->mem[0].name = "BAR0";
+	iomap = pcim_iomap_table(pdev);
+
+	info->mem[0].name = "UIO_LED";
 	info->mem[0].size = pci_resource_len(pdev, BAR0);
 	info->mem[0].addr = pci_resource_start(pdev, BAR0);
+	info->mem[0].internal_addr = iomap[BAR0];
 	info->mem[0].memtype = UIO_MEM_PHYS;
 
 	info->name = DRV_NAME;
@@ -59,11 +69,12 @@ static int led_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 		return ret;
 	}
 
+	pci_set_master(pdev);
+
 	/* activate PCIe interruption (BAR0 Cra 0x50) */
 	writel(0x01, info->mem[0].internal_addr + CRA_ENABLE_REG);
 
 	dev_info(&pdev->dev, "%s version = %s\n", DRV_NAME, DRV_VERSION);
-
 	pci_set_drvdata(pdev, info);
 
 	return 0;
@@ -72,6 +83,7 @@ static int led_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 static void led_remove(struct pci_dev *pdev) {
 	struct uio_info *info = pci_get_drvdata(pdev);
 
+	dev_info(&pdev->dev, "removing %s\n", DRV_NAME);
 	uio_unregister_device(info);
 }
 

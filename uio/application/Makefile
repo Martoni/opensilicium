@@ -5,6 +5,7 @@ CC = $(BSP_APF6_BROUTPUT)host/usr/bin/arm-linux-gnueabihf-gcc
 LD = $(BSP_APF6_BROUTPUT)host/usr/bin/arm-linux-gnueabihf-ld
 
 CFLAGS = -Wall
+LDFLAGS= -lpthread
 
 default: blinkled
 

@@ -14,9 +14,6 @@
 
 static irqreturn_t button_int(int irq, struct uio_info *dev_info)
 {
-
-	readw(dev_info->mem[0].internal_addr + BUTTON_VALUE);
-
 	return IRQ_HANDLED;
 }
 
